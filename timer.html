@@ -3,65 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多重計時器 Pro</title>
+    <title>進階多重計時器 Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-normal: #f4f4f9;
-            --bg-overtime: #ffebee;
-            --primary: #4a90e2;
-            --danger: #e74c3c;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --primary: #0984e3;
+            --danger: #d63031;
+            --success: #00b894;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        body { font-family: sans-serif; background: var(--bg-normal); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .controls { margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .timer-list { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
-        .timer-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .timer-card.overtime { background: var(--bg-overtime); border: 2px solid var(--danger); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
-        .timer-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .timer-name { border: none; font-size: 1.1em; font-weight: bold; width: 60%; }
-        .timer-display { font-size: 2em; font-family: monospace; text-align: center; margin: 10px 0; }
-        .timer-actions { display: flex; justify-content: center; gap: 10px; }
-        button { cursor: pointer; padding: 8px 15px; border: none; border-radius: 5px; background: var(--primary); color: white; }
-        button.reset { background: #95a5a6; }
-        button.add { background: #27ae60; font-size: 1em; }
-        input[type="number"] { width: 50px; padding: 5px; }
+        [data-theme="dark"] {
+            --bg: #1e1e2e;
+            --card-bg: #2b2b3d;
+            --text: #f8f9fa;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            transition: all 0.3s ease;
+            display: flex; flex-direction: column; align-items: center; padding: 40px 20px; 
+        }
+
+        h2 { font-weight: 800; letter-spacing: -1px; margin-bottom: 30px; }
+
+        /* 控制面板 */
+        .controls { 
+            background: var(--card-bg); padding: 25px; border-radius: 16px; 
+            box-shadow: var(--shadow); width: 100%; max-width: 500px;
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px;
+        }
+        input { 
+            padding: 10px; border: 1px solid #ddd; border-radius: 8px; 
+            background: var(--card-bg); color: var(--text);
+        }
+
+        /* 計時器卡片 */
+        .timer-list { width: 100%; max-width: 550px; display: flex; flex-direction: column; gap: 15px; }
+        .timer-card { 
+            background: var(--card-bg); padding: 20px; border-radius: 16px; 
+            box-shadow: var(--shadow); transition: transform 0.2s, background 0.3s;
+            border-left: 6px solid var(--primary);
+        }
+        .timer-card.overtime { 
+            border-left-color: var(--danger);
+            background: rgba(214, 48, 49, 0.1);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(214, 48, 49, 0); } 100% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0); } }
+
+        .timer-header { display: flex; justify-content: space-between; align-items: center; }
+        .timer-name { border: none; font-size: 1.2em; font-weight: 600; width: 70%; background: transparent; }
+        .timer-display { 
+            font-size: 3em; font-family: 'JetBrains Mono', monospace; font-weight: bold;
+            text-align: center; margin: 15px 0; color: var(--primary);
+        }
+        .overtime .timer-display { color: var(--danger); }
+
+        /* 按鈕設計 */
+        .btn-group { display: flex; justify-content: center; gap: 12px; }
+        button { 
+            cursor: pointer; padding: 10px 20px; border: none; border-radius: 8px; 
+            font-weight: 600; transition: opacity 0.2s;
+        }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-pause { background: #636e72; color: white; }
+        .btn-reset { background: transparent; border: 1px solid #ddd; color: var(--text); }
+        .btn-add { background: var(--success); color: white; padding: 10px 25px; }
+        .theme-toggle { position: fixed; top: 20px; right: 20px; font-size: 24px; cursor: pointer; }
+
+        /* 響應式 */
+        @media (max-width: 480px) { .timer-display { font-size: 2.5em; } }
     </style>
 </head>
 <body>
 
-    <h2>⏱️ 多重自動排序計時器</h2>
+    <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
+
+    <h2>Multi-Timer Pro</h2>
 
     <div class="controls">
-        <input type="text" id="newName" placeholder="計時器名稱" value="新任務">
-        <input type="number" id="newMin" placeholder="分" value="5"> :
-        <input type="number" id="newSec" placeholder="秒" value="0">
-        <button class="add" onclick="addTimer()">新增計時器</button>
+        <input type="text" id="newName" placeholder="任務名稱 (例如: 煮麵)" style="flex: 1 1 100%">
+        <input type="number" id="newMin" placeholder="分" value="5" min="0">
+        <input type="number" id="newSec" placeholder="秒" value="0" min="0" max="59">
+        <button class="btn-add" onclick="addTimer()">＋ 新增計時器</button>
     </div>
 
     <div id="timerContainer" class="timer-list"></div>
 
-    <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let timers = [];
+        let timers = JSON.parse(localStorage.getItem('myTimers')) || [];
+        
+        // 頁面載入後，恢復計時器的執行狀態 (如果是暫停的)
+        function init() {
+            timers.forEach(t => { t.isRunning = false; t.interval = null; });
+            renderTimers();
+        }
+
+        function saveToLocal() {
+            // 儲存時不儲存 interval 實體
+            const dataToSave = timers.map(({interval, ...rest}) => rest);
+            localStorage.setItem('myTimers', JSON.stringify(dataToSave));
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        }
 
         function addTimer() {
-            const name = document.getElementById('newName').value || "計時器";
+            const name = document.getElementById('newName').value || "新任務 " + (timers.length + 1);
             const mins = parseInt(document.getElementById('newMin').value) || 0;
             const secs = parseInt(document.getElementById('newSec').value) || 0;
-            const totalSeconds = (mins * 60) + secs;
+            const total = (mins * 60) + secs;
 
-            const timer = {
+            timers.push({
                 id: Date.now(),
                 name: name,
-                initialSeconds: totalSeconds,
-                remainingSeconds: totalSeconds,
+                initialSeconds: total,
+                remainingSeconds: total,
                 isRunning: false,
-                interval: null,
                 isOvertime: false
-            };
-
-            timers.push(timer);
+            });
+            saveToLocal();
             renderTimers();
         }
 
@@ -76,12 +148,20 @@
                     t.remainingSeconds--;
                     if (t.remainingSeconds <= 0 && !t.isOvertime) {
                         t.isOvertime = true;
-                        document.getElementById('alarmSound').play();
+                        playAlarm();
                     }
                     sortAndRender();
                 }, 1000);
             }
             renderTimers();
+        }
+
+        function playAlarm() {
+            const audio = document.getElementById('alarmSound');
+            audio.currentTime = 0;
+            audio.play();
+            // 5秒後自動停止，避免太吵，或手動按暫停停止
+            setTimeout(() => { audio.pause(); }, 8000);
         }
 
         function resetTimer(id) {
@@ -90,21 +170,14 @@
             t.isRunning = false;
             t.isOvertime = false;
             t.remainingSeconds = t.initialSeconds;
+            saveToLocal();
             renderTimers();
-        }
-
-        function formatTime(s) {
-            const absS = Math.abs(s);
-            const mins = Math.floor(absS / 60);
-            const secs = absS % 60;
-            const sign = s < 0 ? "+" : ""; // 超時顯示正號
-            return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
         function sortAndRender() {
-            // 排序邏輯：剩餘時間越少（或超時越多）越靠前
             timers.sort((a, b) => a.remainingSeconds - b.remainingSeconds);
             renderTimers();
+            saveToLocal();
         }
 
         function renderTimers() {
@@ -118,27 +191,42 @@
                 card.innerHTML = `
                     <div class="timer-header">
                         <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
-                        <button onclick="removeTimer(${t.id})" style="background:none; color:#ccc;">✕</button>
+                        <button onclick="removeTimer(${t.id})" style="background:none; color:#999; font-size:1.2em;">✕</button>
                     </div>
                     <div class="timer-display">${formatTime(t.remainingSeconds)}</div>
-                    <div class="timer-actions">
-                        <button onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
-                        <button class="reset" onclick="resetTimer(${t.id})">重置</button>
+                    <div class="btn-group">
+                        <button class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">
+                            ${t.isRunning ? '暫停' : '開始'}
+                        </button>
+                        <button class="btn-reset" onclick="resetTimer(${t.id})">重置</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
+        function formatTime(s) {
+            const isNeg = s < 0;
+            const absS = Math.abs(s);
+            const mins = Math.floor(absS / 60);
+            const secs = absS % 60;
+            return `${isNeg ? '+' : ''}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
         function updateName(id, val) {
             const t = timers.find(x => x.id === id);
-            if (t) t.name = val;
+            if (t) { t.name = val; saveToLocal(); }
         }
 
         function removeTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if(t) clearInterval(t.interval);
             timers = timers.filter(x => x.id !== id);
+            saveToLocal();
             renderTimers();
         }
+
+        init();
     </script>
 </body>
 </html>
