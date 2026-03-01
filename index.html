@@ -3,129 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Timer Pro Dashboard</title>
+    <title>Multi-Timer Pro Dashboard v5</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f1f5f9;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --primary: #2563eb;
-            --header-bg: #0f172a;
-            --danger: #ef4444;
-            --success: #10b981;
-            --border: #e2e8f0;
+            --bg: #f1f5f9; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb;
+            --header-bg: #0f172a; --danger: #ef4444; --success: #10b981; --border: #e2e8f0;
         }
         [data-theme="dark"] {
-            --bg: #020617;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-            --border: #334155;
+            --bg: #020617; --card-bg: #1e293b; --text: #f8fafc; --border: #334155;
         }
 
-        /* 移除增減按鈕 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
-            margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh;
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; }
 
-        /* 頂部面板 */
-        header {
-            background: var(--header-bg); color: white;
-            padding: 15px 30px; display: flex; flex-direction: column; gap: 10px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); z-index: 100;
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        
+        header { background: var(--header-bg); color: white; padding: 15px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 100; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
-        select.main-input, input.main-input { 
-            padding: 10px 14px; font-size: 1rem; border-radius: 8px; border: 1px solid #334155; 
-            background: #1e293b; color: white; outline: none;
-        }
-        select.main-input option { background: #1e293b; color: white; } /* 修正隱身問題 */
+        select.main-input, input.main-input { padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; outline: none; }
+        select.main-input option { background: #1e293b; color: white; }
         
-        .time-box { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid #334155; }
-        .time-box label { font-size: 0.7rem; opacity: 0.6; font-weight: 800; }
-        .time-box input { width: 45px; background: transparent; border: none; color: white; font-size: 1.1rem; text-align: center; font-family: 'JetBrains Mono'; }
+        .time-box { display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; border: 1px solid #334155; }
+        .time-box input { width: 40px; background: transparent; border: none; color: white; font-size: 1.1rem; text-align: center; font-family: 'JetBrains Mono'; }
 
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
         .btn-icon { background: transparent; border: 1px solid #334155; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px 10px; border-radius: 8px; }
 
-        /* 網格系統 */
         #timerContainer {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; padding: 20px; overflow-y: auto; align-content: start;
         }
 
         .timer-card { 
             background: var(--card-bg); border-radius: 12px; padding: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border);
-            display: flex; flex-direction: column; gap: 10px; transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid var(--border);
+            display: flex; flex-direction: column; gap: 10px; transition: border 0.2s;
         }
-        .timer-card.is-editing { border: 2px solid var(--primary); }
+        .timer-card.running { border-color: var(--primary); }
         .timer-card.overtime { border-color: var(--danger); background: rgba(239, 68, 68, 0.05); animation: pulse 2s infinite; }
 
-        /* 放大名稱字體 */
-        .timer-name { 
-            font-size: 1.4rem; font-weight: 800; border: none; background: transparent; 
-            color: var(--text); width: 85%; outline: none;
-        }
-        
-        .timer-display { 
-            font-size: 2.4rem; font-family: 'JetBrains Mono'; text-align: center;
-            color: var(--primary); font-weight: 700; margin: 5px 0;
-        }
+        .timer-name { font-size: 1.5rem; font-weight: 800; border: none; background: transparent; color: var(--text); width: 85%; outline: none; }
+        .timer-display { font-size: 2.8rem; font-family: 'JetBrains Mono'; text-align: center; color: var(--primary); font-weight: 700; margin: 5px 0; }
         .overtime .timer-display { color: var(--danger); }
 
-        .card-inputs input { 
-            width: 40px; background: var(--bg); border: 1px solid var(--border); 
-            border-radius: 4px; text-align: center; font-size: 0.9rem; padding: 3px; color: var(--text);
-        }
-
+        .card-inputs input { width: 45px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 1rem; padding: 4px; color: var(--text); }
         .btn-group { display: flex; gap: 8px; }
-        .btn-group button { flex: 1; padding: 8px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-group button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; }
         .btn-start { background: var(--success); color: white; }
         .btn-pause { background: #f59e0b; color: white; }
         .btn-reset { background: #64748b; color: white; }
 
-        /* 常用清單彈窗 */
-        #presetModal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
-            z-index: 1000; width: 90%; max-width: 400px; border: 1px solid var(--border);
-        }
+        #presetModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 20px 25px rgba(0,0,0,0.5); z-index: 1000; width: 90%; max-width: 400px; border: 1px solid var(--border); }
         #modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; }
-        textarea#presetEditor { width: 100%; height: 150px; margin: 15px 0; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; }
+        textarea#presetEditor { width: 100%; height: 150px; margin: 15px 0; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-top">
-            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer Pro</div>
+            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer Pro <small style="font-size:0.6em; opacity:0.5">v5</small></div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn-icon" id="muteBtn" onclick="toggleMute()">🔊</button>
                 <button class="btn-icon" onclick="toggleTheme()">🌓</button>
                 <button class="btn-icon" onclick="openPresets()">⚙️</button>
             </div>
         </div>
-
         <div class="action-row">
-            <select id="presetSelect" class="main-input" style="width: 180px;">
-                <option value="">快速選擇任務</option>
-            </select>
-            <input type="text" id="newName" class="main-input" placeholder="手動名稱" style="width: 120px;">
+            <select id="presetSelect" class="main-input" style="width: 180px;"></select>
+            <input type="text" id="newName" class="main-input" placeholder="任務名稱" style="width: 150px;">
             <div class="time-box">
-                <label>H</label><input type="number" id="newHour" value="0">
-                <label>M</label><input type="number" id="newMin" value="5">
-                <label>S</label><input type="number" id="newSec" value="0">
+                <input type="number" id="newHour" value="0">:<input type="number" id="newMin" value="5">:<input type="number" id="newSec" value="0">
             </div>
             <button class="btn-add" onclick="addTimer()">＋ 新增項目</button>
         </div>
@@ -135,68 +88,126 @@
 
     <div id="modalOverlay" onclick="closePresets()"></div>
     <div id="presetModal">
-        <h3 style="margin-top:0">常用清單管理</h3>
-        <p style="font-size:0.8rem; color:#888;">請輸入任務名稱，以逗號或換行分隔：</p>
-        <textarea id="presetEditor" placeholder="例如：煮麵, 健身, 報告..."></textarea>
+        <h3>常用清單管理</h3>
+        <textarea id="presetEditor"></textarea>
         <button class="btn-add" style="width:100%" onclick="savePresets()">儲存變更</button>
     </div>
 
     <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let timers = JSON.parse(localStorage.getItem('myTimersV4')) || [];
+        let timers = JSON.parse(localStorage.getItem('myTimersV5')) || [];
         let presets = JSON.parse(localStorage.getItem('myPresets')) || ["煮麵", "深蹲", "休息"];
         let isMuted = false;
-        let editingId = null;
+        let isEditingAny = false;
 
         function init() {
             updatePresetDropdown();
+            // 重置所有計時器的執行狀態防止重整後的 interval 遺失
             timers.forEach(t => { 
                 t.isRunning = false; 
-                if(!t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
+                t.interval = null;
+            });
+            renderTimers();
+            // 啟動全域掃描，但僅更新數字，不重繪 DOM
+            setInterval(globalTick, 1000);
+        }
+
+        function calculateTotal(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
+
+        function globalTick() {
+            let changed = false;
+            timers.forEach(t => {
+                if (t.isRunning) {
+                    t.remainingSeconds--;
+                    if (t.remainingSeconds <= 0 && !t.isOvertime) {
+                        t.isOvertime = true;
+                        if(!isMuted) { document.getElementById('alarmSound').play(); setTimeout(()=>document.getElementById('alarmSound').pause(), 5000); }
+                    }
+                    changed = true;
+                }
+            });
+            
+            // 更新畫面上的數字
+            timers.forEach(t => {
+                const el = document.getElementById(`display-${t.id}`);
+                if (el) el.textContent = formatTime(t.remainingSeconds);
+                if (t.isOvertime) document.getElementById(`card-${t.id}`)?.classList.add('overtime');
+            });
+
+            // 只有在沒有人正在編輯時，才每 5 秒嘗試自動排序一次，避免頻繁跳動
+            if (changed && !isEditingAny && Date.now() % 5000 < 1000) {
+                sortTimers();
+            }
+        }
+
+        function renderTimers() {
+            const container = document.getElementById('timerContainer');
+            container.innerHTML = '';
+            timers.forEach(t => {
+                const card = document.createElement('div');
+                card.id = `card-${t.id}`;
+                card.className = `timer-card ${t.isRunning ? 'running' : ''} ${t.isOvertime ? 'overtime' : ''}`;
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
+                        <button onclick="removeTimer(${t.id})" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:1.5rem;">✕</button>
+                    </div>
+                    <div class="timer-display" id="display-${t.id}">${formatTime(t.remainingSeconds)}</div>
+                    <div class="card-inputs" style="display:flex; justify-content:center; gap:5px;">
+                        <input type="number" value="${t.h}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 'h', this.value)">:
+                        <input type="number" value="${t.m}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 'm', this.value)">:
+                        <input type="number" value="${t.s}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 's', this.value)">
+                    </div>
+                    <div class="btn-group">
+                        <button id="btn-${t.id}" class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
+                        <button class="btn-reset" onclick="resetTimer(${t.id})">重置</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (!t) return;
+            t.isRunning = !t.isRunning;
+            if (t.isRunning) isEditingAny = false; // 開始後允許排序
+            saveToLocal();
+            renderTimers(); // 點擊按鈕時才重繪該狀態
+        }
+
+        function sortTimers() {
+            // 排序邏輯：1. 正在運作的排前面 2. 剩餘時間少的排前面 3. 停止/未開始的排最後
+            timers.sort((a, b) => {
+                if (a.isRunning && !b.isRunning) return -1;
+                if (!a.isRunning && b.isRunning) return 1;
+                if (a.isRunning && b.isRunning) return a.remainingSeconds - b.remainingSeconds;
+                return 0; // 都不在跑則不改順序
             });
             renderTimers();
         }
 
-        // --- 靜音功能 ---
-        function toggleMute() {
-            isMuted = !isMuted;
-            const btn = document.getElementById('muteBtn');
-            btn.textContent = isMuted ? "🚫" : "🔊";
-            if(isMuted) document.getElementById('alarmSound').pause();
+        function removeTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (t) {
+                t.isRunning = false; // 終止全域 Tick 對它的掃描
+                timers = timers.filter(x => x.id !== id);
+                saveAndRender();
+            }
         }
 
-        // --- 常用清單管理 ---
-        function openPresets() {
-            document.getElementById('presetEditor').value = presets.join(', ');
-            document.getElementById('presetModal').style.display = 'block';
-            document.getElementById('modalOverlay').style.display = 'block';
-        }
-        function closePresets() {
-            document.getElementById('presetModal').style.display = 'none';
-            document.getElementById('modalOverlay').style.display = 'none';
-        }
-        function savePresets() {
-            const raw = document.getElementById('presetEditor').value;
-            presets = raw.split(/[,，\n]/).map(s => s.trim()).filter(s => s !== "");
-            localStorage.setItem('myPresets', JSON.stringify(presets));
-            updatePresetDropdown();
-            closePresets();
-        }
-        function updatePresetDropdown() {
-            const select = document.getElementById('presetSelect');
-            select.innerHTML = '<option value="">快速選擇任務</option>';
-            presets.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p; opt.textContent = p;
-                select.appendChild(opt);
-            });
-            select.onchange = (e) => { if(e.target.value) document.getElementById('newName').value = e.target.value; };
+        function resetTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (t) {
+                t.isRunning = false;
+                t.isOvertime = false;
+                t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
+                saveAndRender();
+            }
         }
 
-        // --- 計時核心邏輯 ---
-        function calculateTotal(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
-
+        // --- 其餘輔助功能 ---
         function addTimer() {
             const name = document.getElementById('newName').value || "任務";
             const h = document.getElementById('newHour').value || 0;
@@ -206,86 +217,15 @@
             saveAndRender();
         }
 
-        function setEditing(id, state) {
-            editingId = state ? id : null;
-            if(!state) sortAndRender();
-        }
-
         function updateTaskTime(id, field, val) {
             const t = timers.find(x => x.id === id);
             if (t) {
                 t[field] = val;
                 if (!t.isRunning && !t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
-                localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest)));
+                saveToLocal();
+                const el = document.getElementById(`display-${t.id}`);
+                if (el) el.textContent = formatTime(t.remainingSeconds);
             }
-        }
-
-        function toggleTimer(id) {
-            const t = timers.find(x => x.id === id);
-            if (t.isRunning) {
-                clearInterval(t.interval);
-                t.isRunning = false;
-            } else {
-                t.isRunning = true;
-                editingId = null;
-                t.interval = setInterval(() => {
-                    t.remainingSeconds--;
-                    if (t.remainingSeconds <= 0 && !t.isOvertime) {
-                        t.isOvertime = true;
-                        if(!isMuted) {
-                            const audio = document.getElementById('alarmSound');
-                            audio.currentTime = 0; audio.play();
-                            setTimeout(() => audio.pause(), 6000);
-                        }
-                    }
-                    if (editingId === null) sortAndRender();
-                }, 1000);
-            }
-            renderTimers();
-        }
-
-        function resetTimer(id) {
-            const t = timers.find(x => x.id === id);
-            clearInterval(t.interval);
-            t.isRunning = false; t.isOvertime = false;
-            t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
-            saveAndRender();
-        }
-
-        function sortAndRender() {
-            timers.sort((a, b) => {
-                if (a.id === editingId) return 1;
-                if (b.id === editingId) return -1;
-                return a.remainingSeconds - b.remainingSeconds;
-            });
-            renderTimers();
-            localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest)));
-        }
-
-        function renderTimers() {
-            const container = document.getElementById('timerContainer');
-            container.innerHTML = '';
-            timers.forEach(t => {
-                const card = document.createElement('div');
-                card.className = `timer-card ${t.isOvertime ? 'overtime' : ''} ${t.id == editingId ? 'is-editing' : ''}`;
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
-                        <button onclick="removeTimer(${t.id})" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:1.2rem;">✕</button>
-                    </div>
-                    <div class="timer-display">${formatTime(t.remainingSeconds)}</div>
-                    <div class="card-inputs" style="display:flex; justify-content:center; align-items:center; gap:5px; opacity:0.8;">
-                        <input type="number" value="${t.h}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'h', this.value)">:
-                        <input type="number" value="${t.m}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'm', this.value)">:
-                        <input type="number" value="${t.s}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 's', this.value)">
-                    </div>
-                    <div class="btn-group">
-                        <button class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
-                        <button class="btn-reset" onclick="resetTimer(${t.id})">重置</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
         }
 
         function formatTime(s) {
@@ -298,17 +238,15 @@
             return `${isNeg ? '+' : ''}${res}`;
         }
 
-        function updateName(id, val) {
-            const t = timers.find(x => x.id === id);
-            if (t) { t.name = val; localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest))); }
-        }
-
-        function removeTimer(id) { timers = timers.filter(x => x.id !== id); saveAndRender(); }
-        function saveAndRender() { localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest))); renderTimers(); }
-        function toggleTheme() {
-            const body = document.body;
-            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        }
+        function saveToLocal() { localStorage.setItem('myTimersV5', JSON.stringify(timers.map(({interval, ...rest}) => rest))); }
+        function saveAndRender() { saveToLocal(); renderTimers(); }
+        function toggleMute() { isMuted = !isMuted; document.getElementById('muteBtn').textContent = isMuted ? "🚫" : "🔊"; }
+        function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+        function openPresets() { document.getElementById('presetEditor').value = presets.join(', '); document.getElementById('presetModal').style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block'; }
+        function closePresets() { document.getElementById('presetModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; }
+        function savePresets() { presets = document.getElementById('presetEditor').value.split(/[,，\n]/).map(s => s.trim()).filter(s => s !== ""); localStorage.setItem('myPresets', JSON.stringify(presets)); updatePresetDropdown(); closePresets(); }
+        function updatePresetDropdown() { const select = document.getElementById('presetSelect'); select.innerHTML = '<option value="">快速選擇任務</option>'; presets.forEach(p => { const opt = document.createElement('option'); opt.value = p; opt.textContent = p; select.appendChild(opt); }); select.onchange = (e) => { if(e.target.value) document.getElementById('newName').value = e.target.value; }; }
+        function updateName(id, val) { const t = timers.find(x => x.id === id); if (t) { t.name = val; saveToLocal(); } }
 
         init();
     </script>
