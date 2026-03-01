@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Timer Dashboard Pro</title>
+    <title>Multi-Timer Pro Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f4f7f9;
+            --bg: #f1f5f9;
             --card-bg: #ffffff;
-            --text: #2c3e50;
+            --text: #1e293b;
             --primary: #2563eb;
-            --header-bg: #1e293b;
+            --header-bg: #0f172a;
             --danger: #ef4444;
             --success: #10b981;
             --border: #e2e8f0;
         }
         [data-theme="dark"] {
-            --bg: #0f172a;
+            --bg: #020617;
             --card-bg: #1e293b;
-            --text: #f1f5f9;
+            --text: #f8fafc;
             --border: #334155;
         }
 
-        /* 移除瀏覽器內建增減按鈕 */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* 移除增減按鈕 */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
         body { 
@@ -33,68 +32,75 @@
             margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh;
         }
 
-        /* 頂部強化的新增面板 */
+        /* 頂部面板 */
         header {
             background: var(--header-bg); color: white;
-            padding: 20px 30px; display: flex; flex-direction: column; gap: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 100;
+            padding: 15px 30px; display: flex; flex-direction: column; gap: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); z-index: 100;
         }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .add-zone { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
-        .main-input { 
-            padding: 12px 16px; font-size: 1.1rem; border-radius: 8px; border: none; 
-            background: rgba(255,255,255,0.1); color: white; outline: 2px solid transparent; transition: 0.2s;
-        }
-        .main-input:focus { background: rgba(255,255,255,0.2); outline: 2px solid var(--primary); }
+        .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
-        .time-box { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 8px; }
-        .time-box label { font-size: 0.8rem; opacity: 0.7; font-weight: 800; }
-        .time-box input { width: 50px; background: transparent; border: none; color: white; font-size: 1.2rem; text-align: center; font-family: 'JetBrains Mono'; }
-
-        .btn-main-add { 
-            background: var(--primary); color: white; border: none; padding: 12px 24px; 
-            border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s;
+        select.main-input, input.main-input { 
+            padding: 10px 14px; font-size: 1rem; border-radius: 8px; border: 1px solid #334155; 
+            background: #1e293b; color: white; outline: none;
         }
-        .btn-main-add:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+        select.main-input option { background: #1e293b; color: white; } /* 修正隱身問題 */
+        
+        .time-box { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid #334155; }
+        .time-box label { font-size: 0.7rem; opacity: 0.6; font-weight: 800; }
+        .time-box input { width: 45px; background: transparent; border: none; color: white; font-size: 1.1rem; text-align: center; font-family: 'JetBrains Mono'; }
 
-        /* 任務列表編輯器 */
-        .task-presets { font-size: 0.85rem; display: flex; gap: 10px; align-items: center; }
-        .task-presets input { background: transparent; border-bottom: 1px solid #475569; color: #94a3b8; border-top:none; border-left:none; border-right:none; padding: 2px 5px; width: 250px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .btn-icon { background: transparent; border: 1px solid #334155; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px 10px; border-radius: 8px; }
 
-        /* 網格區塊 */
+        /* 網格系統 */
         #timerContainer {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px; padding: 25px; overflow-y: auto; align-content: start;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px; padding: 20px; overflow-y: auto; align-content: start;
         }
 
         .timer-card { 
-            background: var(--card-bg); border-radius: 16px; padding: 20px;
-            box-shadow: var(--shadow); border: 1px solid var(--border);
-            display: flex; flex-direction: column; gap: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--card-bg); border-radius: 12px; padding: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 10px; transition: 0.2s;
         }
-        .timer-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .timer-card.is-editing { outline: 2px solid var(--primary); box-shadow: 0 0 15px rgba(37,99,235,0.2); }
+        .timer-card.is-editing { border: 2px solid var(--primary); }
         .timer-card.overtime { border-color: var(--danger); background: rgba(239, 68, 68, 0.05); animation: pulse 2s infinite; }
 
+        /* 放大名稱字體 */
+        .timer-name { 
+            font-size: 1.4rem; font-weight: 800; border: none; background: transparent; 
+            color: var(--text); width: 85%; outline: none;
+        }
+        
         .timer-display { 
-            font-size: 2.5rem; font-family: 'JetBrains Mono'; text-align: center;
-            color: var(--primary); font-weight: 600; margin: 5px 0;
+            font-size: 2.4rem; font-family: 'JetBrains Mono'; text-align: center;
+            color: var(--primary); font-weight: 700; margin: 5px 0;
         }
         .overtime .timer-display { color: var(--danger); }
 
-        .card-inputs { display: flex; justify-content: center; gap: 8px; align-items: center; color: #94a3b8; }
         .card-inputs input { 
-            width: 45px; background: var(--bg); border: 1px solid var(--border); 
-            border-radius: 6px; text-align: center; font-size: 1rem; padding: 4px; color: var(--text);
+            width: 40px; background: var(--bg); border: 1px solid var(--border); 
+            border-radius: 4px; text-align: center; font-size: 0.9rem; padding: 3px; color: var(--text);
         }
 
-        .btn-group { display: flex; gap: 10px; }
-        .btn-group button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-group { display: flex; gap: 8px; }
+        .btn-group button { flex: 1; padding: 8px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; }
         .btn-start { background: var(--success); color: white; }
         .btn-pause { background: #f59e0b; color: white; }
         .btn-reset { background: #64748b; color: white; }
+
+        /* 常用清單彈窗 */
+        #presetModal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+            z-index: 1000; width: 90%; max-width: 400px; border: 1px solid var(--border);
+        }
+        #modalOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; }
+        textarea#presetEditor { width: 100%; height: 150px; margin: 15px 0; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
     </style>
@@ -103,44 +109,48 @@
 
     <header>
         <div class="header-top">
-            <div style="font-size: 1.5rem; font-weight: 800; letter-spacing: -1px;">⏱️ Multi-Timer <span style="color:var(--primary)">Pro</span></div>
-            <div onclick="toggleTheme()" style="cursor:pointer; font-size: 1.5rem;">🌓</div>
+            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer Pro</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-icon" id="muteBtn" onclick="toggleMute()">🔊</button>
+                <button class="btn-icon" onclick="toggleTheme()">🌓</button>
+                <button class="btn-icon" onclick="openPresets()">⚙️</button>
+            </div>
         </div>
 
-        <div class="add-zone">
-            <select id="presetSelect" class="main-input" style="min-width: 150px;">
-                <option value="">快速選擇項目</option>
+        <div class="action-row">
+            <select id="presetSelect" class="main-input" style="width: 180px;">
+                <option value="">快速選擇任務</option>
             </select>
-            <input type="text" id="newName" class="main-input" placeholder="或手動輸入名稱">
-            
+            <input type="text" id="newName" class="main-input" placeholder="手動名稱" style="width: 120px;">
             <div class="time-box">
                 <label>H</label><input type="number" id="newHour" value="0">
                 <label>M</label><input type="number" id="newMin" value="5">
                 <label>S</label><input type="number" id="newSec" value="0">
             </div>
-            <button class="btn-main-add" onclick="addTimer()">新增計時項目</button>
-        </div>
-
-        <div class="task-presets">
-            <span>常用列表設定 (以逗號分隔):</span>
-            <input type="text" id="presetEditor" placeholder="例如: 煮麵, 健身, 休息, 報告" onchange="updatePresets(this.value)">
+            <button class="btn-add" onclick="addTimer()">＋ 新增項目</button>
         </div>
     </header>
 
     <div id="timerContainer"></div>
 
+    <div id="modalOverlay" onclick="closePresets()"></div>
+    <div id="presetModal">
+        <h3 style="margin-top:0">常用清單管理</h3>
+        <p style="font-size:0.8rem; color:#888;">請輸入任務名稱，以逗號或換行分隔：</p>
+        <textarea id="presetEditor" placeholder="例如：煮麵, 健身, 報告..."></textarea>
+        <button class="btn-add" style="width:100%" onclick="savePresets()">儲存變更</button>
+    </div>
+
     <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let timers = JSON.parse(localStorage.getItem('myTimersV3')) || [];
+        let timers = JSON.parse(localStorage.getItem('myTimersV4')) || [];
         let presets = JSON.parse(localStorage.getItem('myPresets')) || ["煮麵", "深蹲", "休息"];
-        let editingId = null; // 紀錄正在被編輯的計時器 ID
+        let isMuted = false;
+        let editingId = null;
 
         function init() {
-            // 載入預設選單
-            document.getElementById('presetEditor').value = presets.join(', ');
             updatePresetDropdown();
-            
             timers.forEach(t => { 
                 t.isRunning = false; 
                 if(!t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
@@ -148,15 +158,34 @@
             renderTimers();
         }
 
-        function updatePresets(val) {
-            presets = val.split(',').map(s => s.trim()).filter(s => s !== "");
-            localStorage.setItem('myPresets', JSON.stringify(presets));
-            updatePresetDropdown();
+        // --- 靜音功能 ---
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('muteBtn');
+            btn.textContent = isMuted ? "🚫" : "🔊";
+            if(isMuted) document.getElementById('alarmSound').pause();
         }
 
+        // --- 常用清單管理 ---
+        function openPresets() {
+            document.getElementById('presetEditor').value = presets.join(', ');
+            document.getElementById('presetModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+        function closePresets() {
+            document.getElementById('presetModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+        function savePresets() {
+            const raw = document.getElementById('presetEditor').value;
+            presets = raw.split(/[,，\n]/).map(s => s.trim()).filter(s => s !== "");
+            localStorage.setItem('myPresets', JSON.stringify(presets));
+            updatePresetDropdown();
+            closePresets();
+        }
         function updatePresetDropdown() {
             const select = document.getElementById('presetSelect');
-            select.innerHTML = '<option value="">快速選擇項目</option>';
+            select.innerHTML = '<option value="">快速選擇任務</option>';
             presets.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p; opt.textContent = p;
@@ -165,23 +194,21 @@
             select.onchange = (e) => { if(e.target.value) document.getElementById('newName').value = e.target.value; };
         }
 
-        function calculateTotal(h, m, s) {
-            return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0);
-        }
+        // --- 計時核心邏輯 ---
+        function calculateTotal(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
 
         function addTimer() {
             const name = document.getElementById('newName').value || "任務";
             const h = document.getElementById('newHour').value || 0;
             const m = document.getElementById('newMin').value || 0;
             const s = document.getElementById('newSec').value || 0;
-            
-            timers.push({
-                id: Date.now(),
-                name: name, h: h, m: m, s: s,
-                remainingSeconds: calculateTotal(h, m, s),
-                isRunning: false, isOvertime: false
-            });
+            timers.push({ id: Date.now(), name, h, m, s, remainingSeconds: calculateTotal(h, m, s), isRunning: false, isOvertime: false });
             saveAndRender();
+        }
+
+        function setEditing(id, state) {
+            editingId = state ? id : null;
+            if(!state) sortAndRender();
         }
 
         function updateTaskTime(id, field, val) {
@@ -189,14 +216,8 @@
             if (t) {
                 t[field] = val;
                 if (!t.isRunning && !t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
-                saveToLocal();
-                // 這裡不重新 Render，避免失去焦點，只更新內部數據
+                localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest)));
             }
-        }
-
-        function setEditing(id, state) {
-            editingId = state ? id : null;
-            if(!state) sortAndRender(); // 離開編輯模式時才觸發排序
         }
 
         function toggleTimer(id) {
@@ -206,13 +227,16 @@
                 t.isRunning = false;
             } else {
                 t.isRunning = true;
-                editingId = null; // 開始計時後強制解除編輯鎖定
+                editingId = null;
                 t.interval = setInterval(() => {
                     t.remainingSeconds--;
                     if (t.remainingSeconds <= 0 && !t.isOvertime) {
                         t.isOvertime = true;
-                        document.getElementById('alarmSound').play();
-                        setTimeout(() => document.getElementById('alarmSound').pause(), 5000);
+                        if(!isMuted) {
+                            const audio = document.getElementById('alarmSound');
+                            audio.currentTime = 0; audio.play();
+                            setTimeout(() => audio.pause(), 6000);
+                        }
                     }
                     if (editingId === null) sortAndRender();
                 }, 1000);
@@ -229,62 +253,43 @@
         }
 
         function sortAndRender() {
-            // 排序規則：正在被編輯的 (editingId) 或未啟動且未過期的放在最後，其餘按剩餘時間排前面
             timers.sort((a, b) => {
                 if (a.id === editingId) return 1;
                 if (b.id === editingId) return -1;
                 return a.remainingSeconds - b.remainingSeconds;
             });
             renderTimers();
-            saveToLocal();
+            localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest)));
         }
 
         function renderTimers() {
             const container = document.getElementById('timerContainer');
-            // 為了不干擾輸入，我們採用「如果正在編輯則不重繪該卡片」的邏輯
-            // 但簡易起見，這裡使用「更新文字內容」而非全部innerHTML重新設定
-            const activeEl = document.activeElement;
-            const activeId = activeEl ? activeEl.dataset.id : null;
-
             container.innerHTML = '';
             timers.forEach(t => {
                 const card = document.createElement('div');
                 card.className = `timer-card ${t.isOvertime ? 'overtime' : ''} ${t.id == editingId ? 'is-editing' : ''}`;
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)" 
-                               style="border:none; background:transparent; font-weight:800; color:var(--text); width:80%;">
-                        <button onclick="removeTimer(${t.id})" style="background:transparent; border:none; color:#94a3b8; cursor:pointer;">✕</button>
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
+                        <button onclick="removeTimer(${t.id})" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:1.2rem;">✕</button>
                     </div>
-                    
                     <div class="timer-display">${formatTime(t.remainingSeconds)}</div>
-
-                    <div class="card-inputs">
-                        <input type="number" data-id="${t.id}" value="${t.h}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'h', this.value)">:
-                        <input type="number" data-id="${t.id}" value="${t.m}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'm', this.value)">:
-                        <input type="number" data-id="${t.id}" value="${t.s}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 's', this.value)">
+                    <div class="card-inputs" style="display:flex; justify-content:center; align-items:center; gap:5px; opacity:0.8;">
+                        <input type="number" value="${t.h}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'h', this.value)">:
+                        <input type="number" value="${t.m}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 'm', this.value)">:
+                        <input type="number" value="${t.s}" onfocus="setEditing(${t.id}, true)" onblur="setEditing(${t.id}, false)" onchange="updateTaskTime(${t.id}, 's', this.value)">
                     </div>
-
                     <div class="btn-group">
-                        <button class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">
-                            ${t.isRunning ? '暫停' : '開始'}
-                        </button>
+                        <button class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
                         <button class="btn-reset" onclick="resetTimer(${t.id})">重置</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
-            
-            // 恢復焦點，防止排序後無法繼續打字
-            if (activeId) {
-                const newEl = document.querySelector(`input[data-id="${activeId}"]`);
-                // 這裡需要邏輯精確對準哪個 H/M/S，簡單化處理
-            }
         }
 
         function formatTime(s) {
-            const isNeg = s < 0;
-            const absS = Math.abs(s);
+            const isNeg = s < 0; const absS = Math.abs(s);
             const hrs = Math.floor(absS / 3600);
             const mins = Math.floor((absS % 3600) / 60);
             const secs = absS % 60;
@@ -293,23 +298,13 @@
             return `${isNeg ? '+' : ''}${res}`;
         }
 
-        function saveToLocal() {
-            const data = timers.map(({interval, ...rest}) => rest);
-            localStorage.setItem('myTimersV3', JSON.stringify(data));
-        }
-
-        function saveAndRender() { saveToLocal(); renderTimers(); }
-
         function updateName(id, val) {
             const t = timers.find(x => x.id === id);
-            if (t) { t.name = val; saveToLocal(); }
+            if (t) { t.name = val; localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest))); }
         }
 
-        function removeTimer(id) {
-            timers = timers.filter(x => x.id !== id);
-            saveAndRender();
-        }
-
+        function removeTimer(id) { timers = timers.filter(x => x.id !== id); saveAndRender(); }
+        function saveAndRender() { localStorage.setItem('myTimersV4', JSON.stringify(timers.map(({interval, ...rest}) => rest))); renderTimers(); }
         function toggleTheme() {
             const body = document.body;
             body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
