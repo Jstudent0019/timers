@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多重計時器 Pro</title>
+    <style>
+        :root {
+            --bg-normal: #f4f4f9;
+            --bg-overtime: #ffebee;
+            --primary: #4a90e2;
+            --danger: #e74c3c;
+        }
+        body { font-family: sans-serif; background: var(--bg-normal); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .controls { margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .timer-list { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
+        .timer-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .timer-card.overtime { background: var(--bg-overtime); border: 2px solid var(--danger); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        .timer-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .timer-name { border: none; font-size: 1.1em; font-weight: bold; width: 60%; }
+        .timer-display { font-size: 2em; font-family: monospace; text-align: center; margin: 10px 0; }
+        .timer-actions { display: flex; justify-content: center; gap: 10px; }
+        button { cursor: pointer; padding: 8px 15px; border: none; border-radius: 5px; background: var(--primary); color: white; }
+        button.reset { background: #95a5a6; }
+        button.add { background: #27ae60; font-size: 1em; }
+        input[type="number"] { width: 50px; padding: 5px; }
+    </style>
+</head>
+<body>
+
+    <h2>⏱️ 多重自動排序計時器</h2>
+
+    <div class="controls">
+        <input type="text" id="newName" placeholder="計時器名稱" value="新任務">
+        <input type="number" id="newMin" placeholder="分" value="5"> :
+        <input type="number" id="newSec" placeholder="秒" value="0">
+        <button class="add" onclick="addTimer()">新增計時器</button>
+    </div>
+
+    <div id="timerContainer" class="timer-list"></div>
+
+    <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+    <script>
+        let timers = [];
+
+        function addTimer() {
+            const name = document.getElementById('newName').value || "計時器";
+            const mins = parseInt(document.getElementById('newMin').value) || 0;
+            const secs = parseInt(document.getElementById('newSec').value) || 0;
+            const totalSeconds = (mins * 60) + secs;
+
+            const timer = {
+                id: Date.now(),
+                name: name,
+                initialSeconds: totalSeconds,
+                remainingSeconds: totalSeconds,
+                isRunning: false,
+                interval: null,
+                isOvertime: false
+            };
+
+            timers.push(timer);
+            renderTimers();
+        }
+
+        function toggleTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (t.isRunning) {
+                clearInterval(t.interval);
+                t.isRunning = false;
+            } else {
+                t.isRunning = true;
+                t.interval = setInterval(() => {
+                    t.remainingSeconds--;
+                    if (t.remainingSeconds <= 0 && !t.isOvertime) {
+                        t.isOvertime = true;
+                        document.getElementById('alarmSound').play();
+                    }
+                    sortAndRender();
+                }, 1000);
+            }
+            renderTimers();
+        }
+
+        function resetTimer(id) {
+            const t = timers.find(x => x.id === id);
+            clearInterval(t.interval);
+            t.isRunning = false;
+            t.isOvertime = false;
+            t.remainingSeconds = t.initialSeconds;
+            renderTimers();
+        }
+
+        function formatTime(s) {
+            const absS = Math.abs(s);
+            const mins = Math.floor(absS / 60);
+            const secs = absS % 60;
+            const sign = s < 0 ? "+" : ""; // 超時顯示正號
+            return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function sortAndRender() {
+            // 排序邏輯：剩餘時間越少（或超時越多）越靠前
+            timers.sort((a, b) => a.remainingSeconds - b.remainingSeconds);
+            renderTimers();
+        }
+
+        function renderTimers() {
+            const container = document.getElementById('timerContainer');
+            container.innerHTML = '';
+
+            timers.forEach(t => {
+                const card = document.createElement('div');
+                card.className = `timer-card ${t.isOvertime ? 'overtime' : ''}`;
+                
+                card.innerHTML = `
+                    <div class="timer-header">
+                        <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
+                        <button onclick="removeTimer(${t.id})" style="background:none; color:#ccc;">✕</button>
+                    </div>
+                    <div class="timer-display">${formatTime(t.remainingSeconds)}</div>
+                    <div class="timer-actions">
+                        <button onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
+                        <button class="reset" onclick="resetTimer(${t.id})">重置</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateName(id, val) {
+            const t = timers.find(x => x.id === id);
+            if (t) t.name = val;
+        }
+
+        function removeTimer(id) {
+            timers = timers.filter(x => x.id !== id);
+            renderTimers();
+        }
+    </script>
+</body>
+</html>
