@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Timer Pro Dashboard v5</title>
+    <title>Multi-Timer Pro Dashboard v6</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f1f5f9; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb;
+            --bg: #f1f5f9; --card-bg: #ffffff; --text: #1e293b; --primary: #3b82f6;
             --header-bg: #0f172a; --danger: #ef4444; --success: #10b981; --border: #e2e8f0;
         }
         [data-theme="dark"] {
@@ -17,20 +17,25 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
 
         header { background: var(--header-bg); color: white; padding: 15px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 100; }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
+        /* 工具列 */
+        .tools { display: flex; align-items: center; gap: 15px; }
+        .volume-control { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; }
+        .volume-control input { width: 80px; cursor: pointer; }
+
+        .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         select.main-input, input.main-input { padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; outline: none; }
-        select.main-input option { background: #1e293b; color: white; }
         
         .time-box { display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; border: 1px solid #334155; }
         .time-box input { width: 40px; background: transparent; border: none; color: white; font-size: 1.1rem; text-align: center; font-family: 'JetBrains Mono'; }
 
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-        .btn-icon { background: transparent; border: 1px solid #334155; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px 10px; border-radius: 8px; }
+        .btn-icon { background: transparent; border: 1px solid #334155; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px 10px; border-radius: 8px; transition: 0.2s; }
+        .btn-icon:hover { background: rgba(255,255,255,0.1); }
 
         #timerContainer {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -38,15 +43,15 @@
         }
 
         .timer-card { 
-            background: var(--card-bg); border-radius: 12px; padding: 15px;
+            background: var(--card-bg); border-radius: 12px; padding: 18px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid var(--border);
-            display: flex; flex-direction: column; gap: 10px; transition: border 0.2s;
+            display: flex; flex-direction: column; gap: 12px; transition: border 0.2s, transform 0.2s;
         }
-        .timer-card.running { border-color: var(--primary); }
+        .timer-card.running { border-color: var(--primary); transform: scale(1.02); }
         .timer-card.overtime { border-color: var(--danger); background: rgba(239, 68, 68, 0.05); animation: pulse 2s infinite; }
 
         .timer-name { font-size: 1.5rem; font-weight: 800; border: none; background: transparent; color: var(--text); width: 85%; outline: none; }
-        .timer-display { font-size: 2.8rem; font-family: 'JetBrains Mono'; text-align: center; color: var(--primary); font-weight: 700; margin: 5px 0; }
+        .timer-display { font-size: 3rem; font-family: 'JetBrains Mono'; text-align: center; color: var(--primary); font-weight: 700; }
         .overtime .timer-display { color: var(--danger); }
 
         .card-inputs input { width: 45px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 1rem; padding: 4px; color: var(--text); }
@@ -67,9 +72,12 @@
 
     <header>
         <div class="header-top">
-            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer Pro <small style="font-size:0.6em; opacity:0.5">v5</small></div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-icon" id="muteBtn" onclick="toggleMute()">🔊</button>
+            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer <span style="color:var(--primary)">Pro</span></div>
+            <div class="tools">
+                <div class="volume-control">
+                    <span id="volIcon">🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" oninput="updateVolume(this.value)">
+                </div>
                 <button class="btn-icon" onclick="toggleTheme()">🌓</button>
                 <button class="btn-icon" onclick="openPresets()">⚙️</button>
             </div>
@@ -96,49 +104,88 @@
     <audio id="alarmSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let timers = JSON.parse(localStorage.getItem('myTimersV5')) || [];
+        let timers = JSON.parse(localStorage.getItem('myTimersV6')) || [];
         let presets = JSON.parse(localStorage.getItem('myPresets')) || ["煮麵", "深蹲", "休息"];
-        let isMuted = false;
+        let lastTickTime = Date.now();
         let isEditingAny = false;
+        let alarmVolume = 0.5;
 
         function init() {
             updatePresetDropdown();
-            // 重置所有計時器的執行狀態防止重整後的 interval 遺失
-            timers.forEach(t => { 
-                t.isRunning = false; 
-                t.interval = null;
-            });
+            // 背景恢復邏輯：重啟時暫停所有運行狀態，但保留數值
+            timers.forEach(t => { t.isRunning = false; });
             renderTimers();
-            // 啟動全域掃描，但僅更新數字，不重繪 DOM
-            setInterval(globalTick, 1000);
+            
+            // 使用絕對時間補償的計時循環
+            setInterval(syncTick, 1000);
         }
 
-        function calculateTotal(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
-
-        function globalTick() {
-            let changed = false;
-            timers.forEach(t => {
-                if (t.isRunning) {
-                    t.remainingSeconds--;
-                    if (t.remainingSeconds <= 0 && !t.isOvertime) {
-                        t.isOvertime = true;
-                        if(!isMuted) { document.getElementById('alarmSound').play(); setTimeout(()=>document.getElementById('alarmSound').pause(), 5000); }
-                    }
-                    changed = true;
-                }
-            });
+        // --- 核心：背景持續計時補償 ---
+        function syncTick() {
+            const now = Date.now();
+            const delta = Math.floor((now - lastTickTime) / 1000);
             
-            // 更新畫面上的數字
-            timers.forEach(t => {
-                const el = document.getElementById(`display-${t.id}`);
-                if (el) el.textContent = formatTime(t.remainingSeconds);
-                if (t.isOvertime) document.getElementById(`card-${t.id}`)?.classList.add('overtime');
-            });
+            if (delta >= 1) {
+                let changed = false;
+                timers.forEach(t => {
+                    if (t.isRunning) {
+                        t.remainingSeconds -= delta;
+                        if (t.remainingSeconds <= 0 && !t.isOvertime) {
+                            t.isOvertime = true;
+                            playAlarm();
+                        }
+                        changed = true;
+                    }
+                });
 
-            // 只有在沒有人正在編輯時，才每 5 秒嘗試自動排序一次，避免頻繁跳動
-            if (changed && !isEditingAny && Date.now() % 5000 < 1000) {
-                sortTimers();
+                // 更新顯示
+                timers.forEach(t => {
+                    const el = document.getElementById(`display-${t.id}`);
+                    if (el) el.textContent = formatTime(t.remainingSeconds);
+                    if (t.isOvertime) document.getElementById(`card-${t.id}`)?.classList.add('overtime');
+                });
+
+                if (changed && !isEditingAny && delta > 2) { // 如果從背景回來(delta大)，立即排序
+                    sortTimers();
+                }
+                
+                lastTickTime = now;
+                if(changed) saveToLocal();
             }
+        }
+
+        function playAlarm() {
+            const audio = document.getElementById('alarmSound');
+            audio.volume = alarmVolume;
+            audio.currentTime = 0;
+            audio.play().catch(() => {}); // 防止瀏覽器阻擋自動播放
+            setTimeout(() => audio.pause(), 6000);
+        }
+
+        function updateVolume(val) {
+            alarmVolume = val;
+            document.getElementById('volIcon').textContent = val == 0 ? "🚫" : "🔊";
+            const audio = document.getElementById('alarmSound');
+            audio.volume = val;
+        }
+
+        function toggleTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (!t) return;
+            t.isRunning = !t.isRunning;
+            lastTickTime = Date.now(); // 每次切換時重置錨點
+            saveAndRender();
+        }
+
+        // --- 介面功能 ---
+        function sortTimers() {
+            timers.sort((a, b) => {
+                if (a.isRunning && !b.isRunning) return -1;
+                if (!a.isRunning && b.isRunning) return 1;
+                if (a.isRunning && b.isRunning) return a.remainingSeconds - b.remainingSeconds;
+                return 0;
+            });
+            renderTimers();
         }
 
         function renderTimers() {
@@ -160,7 +207,7 @@
                         <input type="number" value="${t.s}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 's', this.value)">
                     </div>
                     <div class="btn-group">
-                        <button id="btn-${t.id}" class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
+                        <button class="${t.isRunning ? 'btn-pause' : 'btn-start'}" onclick="toggleTimer(${t.id})">${t.isRunning ? '暫停' : '開始'}</button>
                         <button class="btn-reset" onclick="resetTimer(${t.id})">重置</button>
                     </div>
                 `;
@@ -168,66 +215,7 @@
             });
         }
 
-        function toggleTimer(id) {
-            const t = timers.find(x => x.id === id);
-            if (!t) return;
-            t.isRunning = !t.isRunning;
-            if (t.isRunning) isEditingAny = false; // 開始後允許排序
-            saveToLocal();
-            renderTimers(); // 點擊按鈕時才重繪該狀態
-        }
-
-        function sortTimers() {
-            // 排序邏輯：1. 正在運作的排前面 2. 剩餘時間少的排前面 3. 停止/未開始的排最後
-            timers.sort((a, b) => {
-                if (a.isRunning && !b.isRunning) return -1;
-                if (!a.isRunning && b.isRunning) return 1;
-                if (a.isRunning && b.isRunning) return a.remainingSeconds - b.remainingSeconds;
-                return 0; // 都不在跑則不改順序
-            });
-            renderTimers();
-        }
-
-        function removeTimer(id) {
-            const t = timers.find(x => x.id === id);
-            if (t) {
-                t.isRunning = false; // 終止全域 Tick 對它的掃描
-                timers = timers.filter(x => x.id !== id);
-                saveAndRender();
-            }
-        }
-
-        function resetTimer(id) {
-            const t = timers.find(x => x.id === id);
-            if (t) {
-                t.isRunning = false;
-                t.isOvertime = false;
-                t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
-                saveAndRender();
-            }
-        }
-
-        // --- 其餘輔助功能 ---
-        function addTimer() {
-            const name = document.getElementById('newName').value || "任務";
-            const h = document.getElementById('newHour').value || 0;
-            const m = document.getElementById('newMin').value || 0;
-            const s = document.getElementById('newSec').value || 0;
-            timers.push({ id: Date.now(), name, h, m, s, remainingSeconds: calculateTotal(h, m, s), isRunning: false, isOvertime: false });
-            saveAndRender();
-        }
-
-        function updateTaskTime(id, field, val) {
-            const t = timers.find(x => x.id === id);
-            if (t) {
-                t[field] = val;
-                if (!t.isRunning && !t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
-                saveToLocal();
-                const el = document.getElementById(`display-${t.id}`);
-                if (el) el.textContent = formatTime(t.remainingSeconds);
-            }
-        }
-
+        // --- 基礎邏輯 ---
         function formatTime(s) {
             const isNeg = s < 0; const absS = Math.abs(s);
             const hrs = Math.floor(absS / 3600);
@@ -237,11 +225,35 @@
             if (hrs > 0 || isNeg) res = `${hrs.toString().padStart(2, '0')}:${res}`;
             return `${isNeg ? '+' : ''}${res}`;
         }
-
-        function saveToLocal() { localStorage.setItem('myTimersV5', JSON.stringify(timers.map(({interval, ...rest}) => rest))); }
+        function addTimer() {
+            const name = document.getElementById('newName').value || "任務";
+            const h = document.getElementById('newHour').value || 0;
+            const m = document.getElementById('newMin').value || 0;
+            const s = document.getElementById('newSec').value || 0;
+            timers.push({ id: Date.now(), name, h, m, s, remainingSeconds: calculateTotal(h, m, s), isRunning: false, isOvertime: false });
+            saveAndRender();
+        }
+        function removeTimer(id) { timers = timers.filter(x => x.id !== id); saveAndRender(); }
+        function resetTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (t) { t.isRunning = false; t.isOvertime = false; t.remainingSeconds = calculateTotal(t.h, t.m, t.s); saveAndRender(); }
+        }
+        function updateTaskTime(id, field, val) {
+            const t = timers.find(x => x.id === id);
+            if (t) {
+                t[field] = val;
+                if (!t.isRunning && !t.isOvertime) t.remainingSeconds = calculateTotal(t.h, t.m, t.s);
+                saveToLocal();
+                document.getElementById(`display-${t.id}`).textContent = formatTime(t.remainingSeconds);
+            }
+        }
+        function calculateTotal(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
+        function saveToLocal() { localStorage.setItem('myTimersV6', JSON.stringify(timers)); }
         function saveAndRender() { saveToLocal(); renderTimers(); }
-        function toggleMute() { isMuted = !isMuted; document.getElementById('muteBtn').textContent = isMuted ? "🚫" : "🔊"; }
-        function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+        function toggleTheme() { 
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
         function openPresets() { document.getElementById('presetEditor').value = presets.join(', '); document.getElementById('presetModal').style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block'; }
         function closePresets() { document.getElementById('presetModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; }
         function savePresets() { presets = document.getElementById('presetEditor').value.split(/[,，\n]/).map(s => s.trim()).filter(s => s !== ""); localStorage.setItem('myPresets', JSON.stringify(presets)); updatePresetDropdown(); closePresets(); }
