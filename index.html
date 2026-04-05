@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Timer Pro Dashboard v8</title>
+    <title>Multi-Timer Precision v9</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -69,7 +69,7 @@
 
     <header>
         <div class="header-top">
-            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer <span style="color:var(--primary)">Pro v8</span></div>
+            <div style="font-size: 1.4rem; font-weight: 800;">⏱️ Multi-Timer <span style="color:var(--primary)">Precision v9</span></div>
             <div class="tools">
                 <div class="volume-control">
                     <span id="volIcon">🔊</span>
@@ -101,68 +101,113 @@
     <audio id="alarmSound" loop preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let timers = JSON.parse(localStorage.getItem('myTimersV8')) || [];
+        let timers = JSON.parse(localStorage.getItem('myTimersV9')) || [];
         let presets = JSON.parse(localStorage.getItem('myPresets')) || ["煮麵", "深蹲", "休息"];
         let alarmVolume = 0.5;
         let isEditingAny = false;
-        let lastTimestamp = Date.now();
 
         function init() {
             updatePresetDropdown();
-            // 初始化恢復狀態：確保在背景刷新後仍能對齊時間
-            timers.forEach(t => { if(t.isRunning) t.isRunning = true; }); 
+            // 恢復所有計時器為暫停狀態
+            timers.forEach(t => { 
+                t.isRunning = false; 
+                t.displaySeconds = t.remainingSeconds; 
+            });
             renderTimers();
-            setInterval(preciseTick, 100);
+            // 每 100ms 更新一次 UI 顯示
+            setInterval(updateAllDisplays, 100);
         }
 
-        function preciseTick() {
+        // --- 核心：獨立時間計算邏輯 ---
+        function updateAllDisplays() {
             const now = Date.now();
-            const elapsed = now - lastTimestamp;
-
-            if (elapsed >= 1000) {
-                const deltaSeconds = Math.floor(elapsed / 1000);
-                lastTimestamp += deltaSeconds * 1000;
-
-                let needsSort = false;
-                timers.forEach(t => {
-                    if (t.isRunning) {
-                        t.remainingSeconds -= deltaSeconds;
-                        if (t.remainingSeconds <= 0 && !t.isOvertime) {
-                            t.isOvertime = true;
-                            playAlarm();
-                        }
-                        needsSort = true;
-                    }
-                });
-
-                updateDisplayOnly();
-                // 自動排序邏輯：有運行中的項目，且目前沒有人在輸入數字
-                if (needsSort && !isEditingAny && (now % 3000 < 200)) {
-                    sortAndRender();
-                }
-            }
-        }
-
-        function updateDisplayOnly() {
             timers.forEach(t => {
+                if (t.isRunning) {
+                    const elapsedMs = now - t.lastSyncTimestamp;
+                    const currentRemaining = t.baseRemainingSeconds - Math.floor(elapsedMs / 1000);
+                    
+                    // 偵測超時切換點 (只在此時觸發排序與鈴聲)
+                    if (currentRemaining <= 0 && !t.isOvertime) {
+                        t.isOvertime = true;
+                        playAlarm();
+                        sortAndRender(); // 關鍵點排序
+                    }
+                    t.displaySeconds = currentRemaining;
+                } else {
+                    t.displaySeconds = t.remainingSeconds;
+                }
+
+                // 更新 DOM 數字
                 const disp = document.getElementById(`display-${t.id}`);
-                if (disp) disp.textContent = formatTime(t.remainingSeconds);
+                if (disp) disp.textContent = formatTime(t.displaySeconds);
                 if (t.isOvertime) document.getElementById(`card-${t.id}`)?.classList.add('overtime');
             });
         }
 
+        function toggleTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (!t) return;
+            
+            if (!t.isRunning) {
+                // 啟動：紀錄當前的基準時間與時間戳
+                t.isRunning = true;
+                t.baseRemainingSeconds = t.remainingSeconds;
+                t.lastSyncTimestamp = Date.now();
+            } else {
+                // 暫停：將當前計算出的剩餘時間固化回資料中
+                t.isRunning = false;
+                t.remainingSeconds = t.displaySeconds;
+            }
+            sortAndRender(); // 狀態改變時排序
+        }
+
         function sortAndRender() {
-            // 排序優先級：1. 運行中(且剩餘時間少) 2. 暫停/未開始
+            // 排序優先級：1. 運行中(按剩餘時間少優先) 2. 暫停/未開始
             timers.sort((a, b) => {
                 if (a.isRunning && !b.isRunning) return -1;
                 if (!a.isRunning && b.isRunning) return 1;
-                if (a.isRunning && b.isRunning) return a.remainingSeconds - b.remainingSeconds;
+                if (a.isRunning && b.isRunning) return a.displaySeconds - b.displaySeconds;
                 return 0;
             });
             renderTimers();
             saveToLocal();
         }
 
+        function addTimer() {
+            const name = document.getElementById('newName').value || "任務";
+            const h = parseInt(document.getElementById('newHour').value) || 0;
+            const m = parseInt(document.getElementById('newMin').value) || 0;
+            const s = parseInt(document.getElementById('newSec').value) || 0;
+            const total = h * 3600 + m * 60 + s;
+            const id = Date.now();
+
+            const newTimer = {
+                id, name, h, m, s,
+                remainingSeconds: total,
+                displaySeconds: total,
+                baseRemainingSeconds: total,
+                lastSyncTimestamp: Date.now(),
+                isRunning: true,
+                isOvertime: false
+            };
+
+            timers.push(newTimer);
+            sortAndRender(); // 新增時排序
+        }
+
+        function resetTimer(id) {
+            const t = timers.find(x => x.id === id);
+            if (t) {
+                t.isRunning = false;
+                t.isOvertime = false;
+                const total = (parseInt(t.h)||0)*3600 + (parseInt(t.m)||0)*60 + (parseInt(t.s)||0);
+                t.remainingSeconds = total;
+                t.displaySeconds = total;
+                sortAndRender();
+            }
+        }
+
+        // --- UI 與 輔助功能 ---
         function renderTimers() {
             const container = document.getElementById('timerContainer');
             const activeId = document.activeElement ? document.activeElement.dataset.id : null;
@@ -177,7 +222,7 @@
                         <input class="timer-name" value="${t.name}" onchange="updateName(${t.id}, this.value)">
                         <button onclick="removeTimer(${t.id})" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:1.5rem;">✕</button>
                     </div>
-                    <div class="timer-display" id="display-${t.id}">${formatTime(t.remainingSeconds)}</div>
+                    <div class="timer-display" id="display-${t.id}">${formatTime(t.displaySeconds)}</div>
                     <div class="card-inputs" style="display:flex; justify-content:center; gap:5px;">
                         <input type="number" data-id="${t.id}-h" value="${t.h}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 'h', this.value)">:
                         <input type="number" data-id="${t.id}-m" value="${t.m}" onfocus="isEditingAny=true" onblur="isEditingAny=false" onchange="updateTaskTime(${t.id}, 'm', this.value)">:
@@ -193,39 +238,17 @@
             if(activeId) document.querySelector(`[data-id="${activeId}"]`)?.focus();
         }
 
-        // --- 核心改動：新增即開始 ---
-        function addTimer() {
-            const name = document.getElementById('newName').value || "任務";
-            const h = document.getElementById('newHour').value || 0;
-            const m = document.getElementById('newMin').value || 0;
-            const s = document.getElementById('newSec').value || 0;
-            const id = Date.now();
-            const total = (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0);
-
-            timers.push({ id, name, h, m, s, remainingSeconds: total, isRunning: true, isOvertime: false });
-            lastTimestamp = Date.now();
-            sortAndRender(); // 新增後立即執行排序並開始
-        }
-
-        function toggleTimer(id) {
+        function updateTaskTime(id, field, val) {
             const t = timers.find(x => x.id === id);
-            if (!t) return;
-            t.isRunning = !t.isRunning;
-            lastTimestamp = Date.now();
-            sortAndRender();
-        }
-
-        function playAlarm() {
-            const audio = document.getElementById('alarmSound');
-            audio.volume = alarmVolume;
-            audio.play().catch(e => console.log("播放被攔截，請確保有過網頁互動"));
-            setTimeout(() => { if(!audio.paused) audio.pause(); }, 6000);
-        }
-
-        function updateVolume(val) {
-            alarmVolume = val;
-            document.getElementById('volIcon').textContent = val == 0 ? "🚫" : "🔊";
-            document.getElementById('alarmSound').volume = val;
+            if (t) {
+                t[field] = val;
+                if (!t.isRunning && !t.isOvertime) {
+                    const total = (parseInt(t.h)||0)*3600 + (parseInt(t.m)||0)*60 + (parseInt(t.s)||0);
+                    t.remainingSeconds = total;
+                    t.displaySeconds = total;
+                }
+                saveToLocal();
+            }
         }
 
         function formatTime(s) {
@@ -238,31 +261,21 @@
             return `${isNeg ? '+' : ''}${res}`;
         }
 
-        function resetTimer(id) {
-            const t = timers.find(x => x.id === id);
-            if (t) { 
-                t.isRunning = false; t.isOvertime = false; 
-                t.remainingSeconds = (parseInt(t.h)||0)*3600 + (parseInt(t.m)||0)*60 + (parseInt(t.s)||0); 
-                sortAndRender(); 
-            }
+        function playAlarm() {
+            const audio = document.getElementById('alarmSound');
+            audio.volume = alarmVolume;
+            audio.play().catch(() => {});
+            setTimeout(() => { if(!audio.paused) audio.pause(); }, 6000);
         }
 
-        function removeTimer(id) { 
-            timers = timers.filter(x => x.id !== id); 
-            sortAndRender(); 
+        function updateVolume(val) {
+            alarmVolume = val;
+            document.getElementById('volIcon').textContent = val == 0 ? "🚫" : "🔊";
+            document.getElementById('alarmSound').volume = val;
         }
 
-        function updateTaskTime(id, field, val) {
-            const t = timers.find(x => x.id === id);
-            if (t) {
-                t[field] = val;
-                if (!t.isRunning && !t.isOvertime) t.remainingSeconds = (parseInt(t.h)||0)*3600 + (parseInt(t.m)||0)*60 + (parseInt(t.s)||0);
-                saveToLocal();
-                updateDisplayOnly();
-            }
-        }
-
-        function saveToLocal() { localStorage.setItem('myTimersV8', JSON.stringify(timers)); }
+        function saveToLocal() { localStorage.setItem('myTimersV9', JSON.stringify(timers)); }
+        function removeTimer(id) { timers = timers.filter(x => x.id !== id); sortAndRender(); }
         function toggleTheme() { document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
         function openPresets() { document.getElementById('presetEditor').value = presets.join(', '); document.getElementById('presetModal').style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block'; }
         function closePresets() { document.getElementById('presetModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; }
