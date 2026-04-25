@@ -93,7 +93,7 @@
                 <option value="30">提前30秒通知</option>
                 <option value="60">提前1分鐘通知</option>
             </select>
-            <button class="btn-add" onclick="addTimer()">＋ 派小隊</button>
+            <button class="btn-add" onclick="addTimer()">＋ 建立</button>
         </div>
     </header>
 
@@ -110,7 +110,7 @@
 
     <script>
         let timers = JSON.parse(localStorage.getItem('myPikminTimers')) || [];
-        let presets = JSON.parse(localStorage.getItem('myPresets')) || ["大紅蘑菇", "大黃蘑菇", "巨大活動蘑菇"];
+        let presets = JSON.parse(localStorage.getItem('myPresets')) || [];
         let alarmVolume = 0.5;
         let isEditingAny = false;
 
